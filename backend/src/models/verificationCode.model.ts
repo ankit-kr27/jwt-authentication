@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import VerificationCodeType from "../constants/verificationCodeType";
 
 export interface VerificationCodeDocument extends mongoose.Document {
-    userId: mongoose.Types.ObjectId;
+    userId: mongoose.Types.ObjectId;    // This is TS specific
     type: VerificationCodeType;
     expiresAt: Date;
     createdAt: Date;
@@ -10,7 +10,7 @@ export interface VerificationCodeDocument extends mongoose.Document {
 
 const verificationCodeSchema = new mongoose.Schema<VerificationCodeDocument>({
     userId: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: mongoose.Schema.Types.ObjectId,   // This is of mongoose schema type
         ref: "User",
         required: true,
         index: true,
