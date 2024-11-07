@@ -1,12 +1,12 @@
 import { JWT_REFRESH_SECRET, JWT_SECRET } from "../constants/env";
-import { CONFLICT } from "../constants/http";
+import { CONFLICT, UNAUTHORIZED } from "../constants/http";
 import VerificationCodeType from "../constants/verificationCodeType";
 import SessionModel from "../models/session.model";
 import UserModel from "../models/user.model";
 import VerificationCodeModel from "../models/verificationCode.model";
 import appAssert from "../utils/appAsserts";
 import { oneYearFromNow } from "../utils/date";
-import jwt from "jsonwebtoken";
+import { refreshTokenSignOptions, signToken } from "../utils/jwt";
 
 export type CreateAccountParams = {
     email: string;
@@ -25,7 +25,9 @@ export const createAccount = async (data: CreateAccountParams) => {
     const user = await UserModel.create({
         email: data.email,
         password: data.password,
-    })
+    });
+
+    const userId = user._id;
 
     // create verification code 
     const verificationCode = await VerificationCodeModel.create({
@@ -39,33 +41,20 @@ export const createAccount = async (data: CreateAccountParams) => {
     // create session
         // A session is gonna represent the unit of time the user is gonna logged in for
     const session = await SessionModel.create({
-        userId: user._id,
+        userId,
         userAgent: data.userAgent
-    })
+    });
     
     // sign access token and refresh token
-    const refreshToken = jwt.sign(
-        {
-            sessionId: session._id 
-        },
-        JWT_REFRESH_SECRET,
-        { 
-            audience: ['user'],     // for whom the token is created, e.g. user, admin, etc.
-            expiresIn: "30d" 
-        }
-    );
+    const refreshToken = signToken({
+        sessionId: session._id 
+    }, refreshTokenSignOptions);
 
-    const accessToken = jwt.sign(
-        { 
-            userId: user._id,
-            sessionId: session._id 
-        },
-        JWT_SECRET,
-        { 
-            audience: ['user'],     // for whom the token is created, e.g. user, admin, etc.
-            expiresIn: "15m" 
-        }
-    );
+
+    const accessToken = signToken({ 
+        userId,
+        sessionId: session._id 
+    });
 
     // return user and tokens
     return {
@@ -74,3 +63,44 @@ export const createAccount = async (data: CreateAccountParams) => {
         accessToken,
     }
 }
+
+export type LoginParams = {
+    email: string;
+    password: string;
+    userAgent?: string;
+}
+
+export const loginUser = async ({email, password, userAgent}: LoginParams) => {
+    // get the user by email
+    const user = await UserModel.findOne({ email });
+    appAssert(user, UNAUTHORIZED, "Invalid email or password");
+
+    // validate the password from the request 
+    const isValid = await user.comparePassword(password);
+    appAssert(isValid, UNAUTHORIZED, "Invalid email or password");
+
+    const userId = user._id;
+    // create a session
+
+    const session = await SessionModel.create({
+        userId,
+        userAgent
+    });
+
+    // sign access token and refresh token
+    const refreshToken = signToken({
+        sessionId: session._id 
+    }, refreshTokenSignOptions);
+
+    const accessToken = signToken({ 
+        userId,
+        sessionId: session._id 
+    })
+
+    // return user & tokens
+    return {
+        user: user.omitPassword(),
+        accessToken,
+        refreshToken,
+    };
+};
