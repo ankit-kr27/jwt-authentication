@@ -3,7 +3,7 @@ import { fifteenMinutesFromNow, thirtyDaysFromNow } from "./date";
 
 const secure = process.env.NODE_ENV !== 'development'
 
-const REFRESH_PATH = "/auth/refresh";
+export const REFRESH_PATH = "/auth/refresh";
 
 const defaults: CookieOptions = {   // CookieOptions - interface defined by express
     sameSite: "strict",
@@ -11,12 +11,12 @@ const defaults: CookieOptions = {   // CookieOptions - interface defined by expr
     secure
 }
 
-const getAccessTokenCookieOptions = (): CookieOptions => ({
+export const getAccessTokenCookieOptions = (): CookieOptions => ({
     ...defaults,
     expires: fifteenMinutesFromNow(),
 })
 
-const getRefreshTokenCookieOptions = (): CookieOptions => ({
+export const getRefreshTokenCookieOptions = (): CookieOptions => ({
     ...defaults,
     expires: thirtyDaysFromNow(),
     path: REFRESH_PATH   // refresh token will only be sent only on this path, which makes it more secured and less likely to be stolen or tampered

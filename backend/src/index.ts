@@ -41,7 +41,7 @@ app.get("/health",
 
 app.use("/auth", authRoutes);
 
-app.use(errorHandler)
+app.use(errorHandler)   // The error handler middleware is put after the routes as any error gets caught in the controllers it is passed to that middleware via "next"
 
 app.listen(
     PORT,

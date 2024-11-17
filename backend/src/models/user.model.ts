@@ -31,7 +31,7 @@ userSchema.pre("save", async function (next) {
 });
 
 userSchema.methods.comparePassword = async function (val: string) {
-    return compareValue(val, this.password);
+    return compareValue(val, this.password);    // promise that resolves to a boolean
 }
 
 userSchema.methods.omitPassword = function () {
