@@ -5,6 +5,7 @@ import SessionModel from "../models/session.model";
 import UserModel from "../models/user.model";
 import VerificationCodeModel from "../models/verificationCode.model";
 import appAssert from "../utils/appAsserts";
+import { hashValue } from "../utils/bcrypt";
 import { fiveMinutesAgo, ONE_DAY_MS, oneHourFromNow, oneYearFromNow, thirtyDaysFromNow } from "../utils/date";
 import { getPasswordResetTemplate, getVerifyEmailTemplate } from "../utils/emailTemplates";
 import { RefreshTokenPayload, refreshTokenSignOptions, signToken, verifyToken } from "../utils/jwt";
@@ -229,4 +230,40 @@ export const sendPasswordResetEmail = async (email: string) => {
         url,
         emailId: data.id,
     }
+};
+
+type ResetPasswordParams = {
+    password: string,
+    verificationCode: string,
+};
+
+export const resetPassword = async ({ password, verificationCode }: ResetPasswordParams) => {
+    // get the verification code
+    const validCode = await VerificationCodeModel.findOne({
+        _id: verificationCode,
+        type: VerificationCodeType.PasswordReset,
+        expiresAt: { $gt: new Date()} // make sure that it expires later than the current date
+    });
+
+    appAssert(validCode, NOT_FOUND, "Invalid or expired verification code")
+
+    // if valid update the password
+    const updatedUser = await UserModel.findByIdAndUpdate(
+        validCode.userId,
+        {
+            password: await hashValue(password),  // doing it explicitly bec the pre(save) only works while creating a new user and not updating
+        },
+    )
+    appAssert(updatedUser, INTERNAL_SERVER_ERROR, "Failed to reset password");
+
+    // delete the verification code
+    await validCode.deleteOne();
+
+    // delete all sessions, from all devices
+    await SessionModel.deleteMany({userId: updatedUser._id});
+
+    // return success
+    return {
+        user: updatedUser.omitPassword(),
+    };
 }
