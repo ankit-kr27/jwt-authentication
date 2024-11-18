@@ -1,8 +1,8 @@
 import catchErrors from "../utils/catchErrors";
-import { createAccount, loginUser, refreshUserAccessToken } from "../services/auth.service";
+import { createAccount, loginUser, refreshUserAccessToken, verifyEmail } from "../services/auth.service";
 import { CREATED, OK, UNAUTHORIZED } from "../constants/http";
 import { clearAuthCookies, getAccessTokenCookieOptions, getRefreshTokenCookieOptions, setAuthCookies } from "../utils/cookies";
-import { loginSchema, registerSchema } from "./auth.schemas";
+import { loginSchema, registerSchema, verificationCodeSchema } from "./auth.schemas";
 import { verifyToken } from "../utils/jwt";
 import SessionModel from "../models/session.model";
 import appAssert from "../utils/appAsserts";
@@ -77,4 +77,18 @@ export const refreshHandler = catchErrors(
                 message: "Access token refreshed",
             })
     }
-)
+);
+
+export const verifyEmailHandler = catchErrors(
+    async (req, res) => {
+        const verificationCode = verificationCodeSchema.parse(req.params.code);
+
+        await verifyEmail(verificationCode);
+
+        return res
+            .status(OK)
+            .json({
+                message: "Email was successfully verified",
+            })
+    }
+);
