@@ -1,12 +1,12 @@
 import { APP_ORIGIN, JWT_REFRESH_SECRET, JWT_SECRET } from "../constants/env";
-import { CONFLICT, INTERNAL_SERVER_ERROR, NOT_FOUND, UNAUTHORIZED } from "../constants/http";
+import { CONFLICT, INTERNAL_SERVER_ERROR, NOT_FOUND, TOO_MANY_REQUESTS, UNAUTHORIZED } from "../constants/http";
 import VerificationCodeType from "../constants/verificationCodeType";
 import SessionModel from "../models/session.model";
 import UserModel from "../models/user.model";
 import VerificationCodeModel from "../models/verificationCode.model";
 import appAssert from "../utils/appAsserts";
-import { oneYearFromNow, thirtyDaysFromNow } from "../utils/date";
-import { getVerifyEmailTemplate } from "../utils/emailTemplates";
+import { fiveMinutesAgo, ONE_DAY_MS, oneHourFromNow, oneYearFromNow, thirtyDaysFromNow } from "../utils/date";
+import { getPasswordResetTemplate, getVerifyEmailTemplate } from "../utils/emailTemplates";
 import { RefreshTokenPayload, refreshTokenSignOptions, signToken, verifyToken } from "../utils/jwt";
 import { sendMail } from "../utils/sendMail";
 
@@ -133,7 +133,6 @@ export const refreshUserAccessToken = async (refreshToken: string) => {
     );
 
     // refresh the session if it expires in the next 24 hours
-    const ONE_DAY_MS = 24 * 60 * 60 * 1000;
     const sessionNeedsRefresh = session.expiresAt.getTime() - now <= ONE_DAY_MS;
 
     if(sessionNeedsRefresh) {
@@ -185,5 +184,49 @@ export const verifyEmail = async (code: string) => {
     // return user
     return {
         user: updatedUser.omitPassword(),
+    }
+};
+
+export const sendPasswordResetEmail = async (email: string) => {
+    // get the user by email
+    const user = await UserModel.findOne({ email });
+    appAssert(user, NOT_FOUND, "User not found");
+
+    // check email rate limit
+    const fiveMinAgo = fiveMinutesAgo();
+    const count = await VerificationCodeModel.countDocuments({
+        userId: user._id,
+        type: VerificationCodeType.PasswordReset,
+        createdAt: { $gt: fiveMinAgo },     // this defines that the document should have been created in the last five minutes
+    });
+
+    appAssert(count <= 1, TOO_MANY_REQUESTS, "Too many requests, please try again later");
+
+    // create verification code 
+    const expiresAt = oneHourFromNow();
+    const verificationCode = await VerificationCodeModel.create({
+        userId: user._id,
+        type: VerificationCodeType.PasswordReset,
+        expiresAt,
+    });
+
+    // send verification email
+    const url = `${APP_ORIGIN}/password/reset/?code=${verificationCode._id}&exp=${expiresAt.getTime()}`;
+
+    const { data, error } = await sendMail({
+        to: user.email,
+        ...getPasswordResetTemplate(url)
+    });
+
+    appAssert(
+        data?.id,
+        INTERNAL_SERVER_ERROR,
+        `${error?.name} - ${error?.message}`
+    )
+
+    // return success
+    return {
+        url,
+        emailId: data.id,
     }
 }
