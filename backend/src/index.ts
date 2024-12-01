@@ -8,6 +8,8 @@ import errorHandler from "./middleware/errorHandler";
 import catchErrors from "./utils/catchErrors";
 import { OK } from "./constants/http";
 import authRoutes from "./routes/auth.route";
+import authenticate from "./middleware/authenticate";
+import { userRoutes } from "./routes/user.routes";
 
 const app = express();
 
@@ -39,7 +41,11 @@ app.get("/health",
     })
 );
 
+// auth routes
 app.use("/auth", authRoutes);
+
+// protected routes
+app.use("/user", authenticate, userRoutes)
 
 app.use(errorHandler)   // The error handler middleware is put after the routes as any error gets caught in the controllers it is passed to that middleware via "next"
 

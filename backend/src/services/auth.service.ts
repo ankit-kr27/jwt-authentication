@@ -266,4 +266,5 @@ export const resetPassword = async ({ password, verificationCode }: ResetPasswor
     return {
         user: updatedUser.omitPassword(),
     };
-}
+};
+
