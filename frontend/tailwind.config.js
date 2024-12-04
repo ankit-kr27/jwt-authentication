@@ -22,19 +22,15 @@ export default {
             light: {
                 layout: {}, // light theme layout tokens
                 colors: {
-                    primary: "#eb5e28",
-                    secondary: "#ff7d00",
-                    content1: "#252422",
-                    background: "#fff", 
+                    primary: "#2196f3",
+                    secondary: "#e3f2fd", 
                 },
             },
             dark: {
                 layout: {}, // dark theme layout tokens
                 colors: {
-                    primary: "#eb5e28", // vibrant orange
-                    secondary: "#ff7d00", // muted dark orange
-                    content1: "#fffcf2", // light gray for text
-                    background: "#252422", // deep, near-black
+                    primary: "#2196f3", 
+                    secondary: "#e3f2fd", 
                 },
             },
             // ... custom themes
