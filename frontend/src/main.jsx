@@ -13,7 +13,9 @@ createRoot(document.getElementById("root")).render(
     <NextUIProvider>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
-          <App />
+          <main className="dark text-foreground bg-background">
+            <App />
+          </main>
           <ReactQueryDevtools initialIsOpen={false} />
         </BrowserRouter>
       </QueryClientProvider>

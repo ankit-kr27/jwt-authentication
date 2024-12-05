@@ -31,6 +31,8 @@ export default {
                 colors: {
                     primary: "#2196f3", 
                     secondary: "#e3f2fd", 
+                    foreground: "#edf2f4",
+                    background: "#2b2d42",
                 },
             },
             // ... custom themes
