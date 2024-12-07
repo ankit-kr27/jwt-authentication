@@ -6,6 +6,6 @@ const sessionRoutes = Router();
 
 // prefix: /sessions
 sessionRoutes.get("/", getSessionsHandler);
-sessionRoutes.delete("/:sessionId", deleteSessionHandler);
+sessionRoutes.delete("/:id", deleteSessionHandler);
 
 export default sessionRoutes;

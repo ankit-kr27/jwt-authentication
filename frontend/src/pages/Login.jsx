@@ -1,14 +1,17 @@
 import { Button, Input } from "@nextui-org/react";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { login } from "../lib/api";
 
 const Login = () => {
+  const location = useLocation();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  const redirectUrl = location.state?.redirectUrl || "/"; // redirect to the page the user was on before logging in if available 
 
   const {
     mutate: signIn,
@@ -17,7 +20,7 @@ const Login = () => {
   } = useMutation({
     mutationFn: login,
     onSuccess: () => {
-      navigate("/", {
+      navigate(redirectUrl, {
         replace: true,
       });
     },
