@@ -12,14 +12,31 @@ import authenticate from "./middleware/authenticate";
 import { userRoutes } from "./routes/user.routes";
 import sessionRoutes from "./routes/session.route";
 
+const corsConfig = {
+    "allowedOrigins": ["http://localhost:5173", "jwt-authentication-ch7k7pcv8-ankitkr27s-projects.vercel.app", "jwt-authentication-xi-ten.vercel.app"],
+    "allowCredentials": true,
+    "allowedMethods": ["GET", "POST"],
+    "allowedHeaders": ["Content-Type", "Authorization"]
+}
+
+const corsOptions = {
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+        if (!origin || corsConfig.allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error("Not allowed by CORS"));
+        }
+    },
+    credentials: corsConfig.allowCredentials,
+    methods: corsConfig.allowedMethods.join(','),
+    allowedHeaders: corsConfig.allowedHeaders.join(',') 
+};
+
 const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
-app.use(cors({
-    origin: APP_ORIGIN,
-    credentials: true,
-}))
+app.use(cors(corsOptions));
 app.use(cookieParser());
 
 // app.get("/health", async (req, res, next) => {    

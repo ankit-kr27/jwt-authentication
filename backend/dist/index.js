@@ -16,13 +16,29 @@ const auth_route_1 = __importDefault(require("./routes/auth.route"));
 const authenticate_1 = __importDefault(require("./middleware/authenticate"));
 const user_routes_1 = require("./routes/user.routes");
 const session_route_1 = __importDefault(require("./routes/session.route"));
+const corsConfig = {
+    "allowedOrigins": ["http://localhost:5173", "jwt-authentication-ch7k7pcv8-ankitkr27s-projects.vercel.app", "jwt-authentication-xi-ten.vercel.app"],
+    "allowCredentials": true,
+    "allowedMethods": ["GET", "POST"],
+    "allowedHeaders": ["Content-Type", "Authorization"]
+};
+const corsOptions = {
+    origin: (origin, callback) => {
+        if (!origin || corsConfig.allowedOrigins.includes(origin)) {
+            callback(null, true);
+        }
+        else {
+            callback(new Error("Not allowed by CORS"));
+        }
+    },
+    credentials: corsConfig.allowCredentials,
+    methods: corsConfig.allowedMethods.join(','),
+    allowedHeaders: corsConfig.allowedHeaders.join(',')
+};
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
-app.use((0, cors_1.default)({
-    origin: env_1.APP_ORIGIN,
-    credentials: true,
-}));
+app.use((0, cors_1.default)(corsOptions));
 app.use((0, cookie_parser_1.default)());
 // app.get("/health", async (req, res, next) => {    
 // // when we make the function async it is supposed to return a promise and when an error is thrown, it becomes a promise rejection. It needs to handled separately in the below manner.
